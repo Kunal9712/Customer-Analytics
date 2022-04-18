@@ -1,0 +1,110 @@
+             STATFINITY SQL CASE STUDY
+
+Response Queries
+
+1. SELECT store_type, count(distinct transaction_id) as total_transactions
+    FROM `ststfinity-assessment.statfinity_sql_case.Transaction`
+    GROUP BY Store_type
+    ORDER BY count(distinct transaction_id) desc;
+=> "e-Shop" is the most preferred mode of transaction with 8430 unique transactions.
+
+2. SELECT gender, count(distinct customer_id)
+    FROM `ststfinity-assessment.statfinity_sql_case.Customer`
+    GROUP BY gender;
+=> Female customers are 2753 and Male are 2892.
+
+3. SELECT city_code, count(distinct customer_id) as no_of_customers
+    FROM `ststfinity-assessment.statfinity_sql_case.Customer`
+    GROUP BY city_code
+    ORDER BY count(distinct customer_id) desc;
+=> City with code "3"	 has a maximum of 595 unique customers.
+
+4. SELECT count(distinct prod_subcat) as Books_subcat
+    FROM `ststfinity-assessment.statfinity_sql_case.Prod cate`
+    WHERE prod_cat='Books'
+=> "Books" category has 6 sub-categories in total.
+
+5. SELECT max(Qty) as maximum_quantity
+    FROM `ststfinity-assessment.statfinity_sql_case.Transaction`;
+=> At max, 5 products were ordered.
+
+6. SELECT p.prod_cat, sum(t.Qty*t.Rate) as Total_Revenue
+    FROM `ststfinity-assessment.statfinity_sql_case.Prod cate` as p 
+    INNER JOIN `ststfinity-assessment.statfinity_sql_case.Transaction` as t
+    ON p.prod_cat_code=t.prod_cat_code
+    WHERE p.prod_cat in ("Electronics", "Books")
+    GROUP BY p.prod_cat;
+=> Net total revenues for "Electronics" and "Books" categories are 58662845
+and 86589552.
+
+7. SELECT cust_id, count(transaction_id) as No_of_transactions, count(cust_id) over () as total_customers
+    FROM `ststfinity-assessment.statfinity_sql_case.Transaction` 
+    GROUP BY cust_id
+    HAVING count(transaction_id)>10;
+=> 36 customers have more than 10 completed transactions.
+
+8. SELECT sum(t.Qty*t.Rate) as Combined_Revenue
+    FROM `ststfinity-assessment.statfinity_sql_case.Prod cate` as p 
+    INNER JOIN `ststfinity-assessment.statfinity_sql_case.Transaction` as t
+    ON (p.prod_cat_code=t.prod_cat_code)
+    WHERE p.prod_cat in ("Electronics", "Clothing") and t.store_type= "Flagship store";
+=> From "Flagship Stores", combined revenue earned from "Electronics and "Clothing"
+product categories is 16651416.
+
+9. SELECT p.prod_subcat, sum(t.Qty*t.Rate) as total_revenue 
+    From `ststfinity-assessment.statfinity_sql_case.Customer` as c
+    INNER JOIN `ststfinity-assessment.statfinity_sql_case.Transaction` as t
+    ON (c.customer_id=t.cust_id)
+    INNER JOIN `ststfinity-assessment.statfinity_sql_case.Prod cate` as p
+    ON (t.prod_subcat_code=p.prod_sub_cat_code)
+    WHERE c.Gender= "M" and p.prod_cat="Electronics"
+    GROUP BY p.prod_subcat;
+
+10. SELECT p.prod_subcat, sum(t.Qty*t.Rate)*100/sum(sum(t.Qty*t.Rate)) over() as percentage_Sales
+      FROM `ststfinity-assessment.statfinity_sql_case.Prod cate` as p
+      INNER JOIN `ststfinity-assessment.statfinity_sql_case.Transaction` as t
+      ON (p.prod_sub_cat_code=t.prod_subcat_code)
+      GROUP BY p.prod_subcat
+      ORDER BY sum(t.Qty*t.Rate) desc
+      LIMIT 5;
+
+11. 
+
+12. SELECT p.prod_cat, sum(t.total_amt)
+     FROM `ststfinity-assessment.statfinity_sql_case.Prod cate` as p
+     INNER JOIN `ststfinity-assessment.statfinity_sql_case.Transaction`as t
+     ON (p.prod_cat_code=t.prod_cat_code)
+     WHERE date_diff(current_date(), parse_date("%Y%m%d",t.tran_date),day)=30
+     GROUP BY p.prod_cat;
+
+13. SELECT store_type, sum(Qty*Rate) as Sales_Amt, sum(Qty) as Total_Quantity
+      FROM `ststfinity-assessment.statfinity_sql_case.Transaction`
+      GROUP BY store_type
+      ORDER BY Sum(Qty*Rate) desc, sum(Qty) desc;
+=> By total sales and quantity, "e-Shop" store type sells the maximum products.
+
+14. SELECT p.prod_cat, avg(sum(t.Qty*t.Rate)) over(partition by p.prod_cat) as avg_revenue, 
+                    avg(sum(t.Qty*t.Rate)) over() as overall_average
+      FROM `ststfinity-assessment.statfinity_sql_case.Prod cate` as p
+      INNER JOIN `ststfinity-assessment.statfinity_sql_case.Transaction` as t
+      ON (p.prod_cat_code=t.prod_cat_code)
+      GROUP BY p.prod_cat
+      ORDER BY avg(sum(t.Qty*t.Rate)) over(partition by p.prod_cat) desc;
+=> Out of the six product categoris, only "Books" and "Electronics" have the revenue average 
+above the overall average.
+
+15. SELECT p.prod_subcat, avg(sum(t.Qty*t.Rate)) over(partition by p.prod_subcat) as avg_revenue, 
+                    sum(sum(t.Qty*t.Rate)) over() as total_revenue
+     FROM `ststfinity-assessment.statfinity_sql_case.Prod cate` as p
+     INNER JOIN `ststfinity-assessment.statfinity_sql_case.Transaction` as t
+     ON (p.prod_sub_cat_code=t.prod_subcat_code)  
+     WHERE p.prod_cat in
+                 (SELECT p.prod_cat
+                  FROM `ststfinity-assessment.statfinity_sql_case.Prod cate` as p
+                  INNER JOIN `ststfinity-assessment.statfinity_sql_case.Transaction` as t
+                  ON (p.prod_cat_code=t.prod_cat_code)
+                  GROUP BY p.prod_cat
+                  ORDER BY sum(t.Qty) desc
+                  LIMIT 5)
+     GROUP BY p.prod_subcat;
+   
